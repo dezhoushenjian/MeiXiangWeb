@@ -2,11 +2,11 @@
   <div>
     <div class="gva-search-box">
       <el-form :inline="true" :model="searchInfo" class="demo-form-inline" @keyup.enter="onSubmit">
-      <el-form-item label="创建时间">
-      <el-date-picker v-model="searchInfo.startCreatedAt" type="datetime" placeholder="开始时间"></el-date-picker>
-       —
-      <el-date-picker v-model="searchInfo.endCreatedAt" type="datetime" placeholder="结束时间"></el-date-picker>
-      </el-form-item>
+        <el-form-item label="创建时间">
+          <el-date-picker v-model="searchInfo.startCreatedAt" type="datetime" placeholder="开始时间" />
+          —
+          <el-date-picker v-model="searchInfo.endCreatedAt" type="datetime" placeholder="结束时间" />
+        </el-form-item>
         <el-form-item>
           <el-button type="primary" icon="search" @click="onSubmit">查询</el-button>
           <el-button icon="refresh" @click="onReset">重置</el-button>
@@ -14,89 +14,108 @@
       </el-form>
     </div>
     <div class="gva-table-box">
-        <div class="gva-btn-list">
-            <el-button type="primary" icon="plus" @click="openDialog">新增</el-button>
-            <el-popover v-model:visible="deleteVisible" placement="top" width="160">
-            <p>确定要删除吗？</p>
-            <div style="text-align: right; margin-top: 8px;">
-                <el-button type="primary" link @click="deleteVisible = false">取消</el-button>
-                <el-button type="primary" @click="onDelete">确定</el-button>
-            </div>
-            <template #reference>
-                <el-button icon="delete" style="margin-left: 10px;" :disabled="!multipleSelection.length" @click="deleteVisible = true">删除</el-button>
-            </template>
-            </el-popover>
-        </div>
-        <el-table
+      <div class="gva-btn-list">
+        <el-button type="primary" icon="plus" @click="openDialog">新增</el-button>
+        <el-popover v-model:visible="deleteVisible" placement="top" width="160">
+          <p>确定要删除吗？</p>
+          <div style="text-align: right; margin-top: 8px;">
+            <el-button type="primary" link @click="deleteVisible = false">取消</el-button>
+            <el-button type="primary" @click="onDelete">确定</el-button>
+          </div>
+          <template #reference>
+            <el-button
+              icon="delete"
+              style="margin-left: 10px;"
+              :disabled="!multipleSelection.length"
+              @click="deleteVisible = true"
+            >删除
+            </el-button>
+          </template>
+        </el-popover>
+      </div>
+      <el-table
         ref="multipleTable"
         style="width: 100%"
         tooltip-effect="dark"
         :data="tableData"
         row-key="ID"
         @selection-change="handleSelectionChange"
-        >
-        <el-table-column type="selection" width="55" />
-        <el-table-column align="left" label="日期" width="180">
-            <template #default="scope">{{ formatDate(scope.row.CreatedAt) }}</template>
+      >
+        <el-table-column type="selection" width="50" />
+        <el-table-column align="left" label="创建日期">
+          <template #default="scope">{{ formatDate(scope.row.CreatedAt) }}</template>
         </el-table-column>
-        <el-table-column align="left" label="名称" prop="name" width="120" />
-        <el-table-column align="left" label="父id" prop="pid" width="120">
-            <template #default="scope">
-            {{ filterDict(scope.row.pid,intOptions) }}
-            </template>
+        <el-table-column align="left" label="项目名称" prop="name" />
+        <el-table-column align="left" label="上级项目" prop="pid">
+          <template #default="scope">
+            {{ filterDict(scope.row.pid, intOptions) }}
+          </template>
         </el-table-column>
-        <el-table-column align="left" label="level" prop="level" width="120">
-            <template #default="scope">
-            {{ filterDict(scope.row.level,intOptions) }}
-            </template>
+        <el-table-column align="left" label="项目层级" prop="level">
+          <template #default="scope">
+            {{ filterDict(scope.row.level, intOptions) }}
+          </template>
         </el-table-column>
-        <el-table-column align="left" label="位置编号" prop="positionId" width="120">
-            <template #default="scope">
-            {{ filterDict(scope.row.positionId,intOptions) }}
-            </template>
+        <el-table-column align="left" label="区域编码" prop="positionId">
+          <template #default="scope">
+            {{ filterDict(scope.row.positionId, intOptions) }}
+          </template>
         </el-table-column>
-        <el-table-column align="left" label="位置名称" prop="positionName" width="120" />
-        <el-table-column align="left" label="按钮组">
-            <template #default="scope">
-            <el-button type="primary" link icon="edit" class="table-button" @click="updateProjectStructFunc(scope.row)">变更</el-button>
+        <el-table-column align="left" label="区域名称" prop="positionName" />
+        <el-table-column align="left" label="按钮组" width="150">
+          <template #default="scope">
+            <el-button type="primary" link icon="edit" class="table-button" @click="updateProjectStructFunc(scope.row)">
+              变更
+            </el-button>
             <el-button type="primary" link icon="delete" @click="deleteRow(scope.row)">删除</el-button>
-            </template>
+          </template>
         </el-table-column>
-        </el-table>
-        <div class="gva-pagination">
-            <el-pagination
-            layout="total, sizes, prev, pager, next, jumper"
-            :current-page="page"
-            :page-size="pageSize"
-            :page-sizes="[10, 30, 50, 100]"
-            :total="total"
-            @current-change="handleCurrentChange"
-            @size-change="handleSizeChange"
-            />
-        </div>
+      </el-table>
+      <div class="gva-pagination">
+        <el-pagination
+          layout="total, sizes, prev, pager, next, jumper"
+          :current-page="page"
+          :page-size="pageSize"
+          :page-sizes="[10, 30, 50, 100]"
+          :total="total"
+          @current-change="handleCurrentChange"
+          @size-change="handleSizeChange"
+        />
+      </div>
     </div>
-    <el-dialog v-model="dialogFormVisible" :before-close="closeDialog" title="弹窗操作">
-      <el-form :model="formData" label-position="right" ref="elFormRef" :rules="rule" label-width="80px">
-        <el-form-item label="名称:"  prop="name" >
-          <el-input v-model="formData.name" :clearable="false"  placeholder="请输入" />
+    <el-dialog v-model="dialogFormVisible" :before-close="closeDialog" :title="type==='create'?'创建':'变更'">
+      <el-form
+        ref="elFormRef"
+        :model="formData"
+        :rules="rules"
+        label-position="left"
+        label-width="80px"
+        @submit.prevent
+      >
+        <el-form-item label="项目名称" prop="name" class="required label-center-align">
+          <el-input v-model="formData.name" type="text" placeholder="请输入项目名称" clearable />
         </el-form-item>
-        <el-form-item label="父id:"  prop="pid" >
-          <el-select v-model="formData.pid" placeholder="请选择" style="width:100%" :clearable="false" >
-            <el-option v-for="(item,key) in intOptions" :key="key" :label="item.label" :value="item.value" />
-          </el-select>
+        <el-form-item label="上级项目" prop="pid" class="required label-center-align">
+          <el-cascader
+            v-model="formData.pid"
+            class="full-width-input"
+            :options="pidOptions"
+            clearable
+            filterable
+            :props="props0"
+            placeholder="请选择上级项目"
+          />
         </el-form-item>
-        <el-form-item label="level:"  prop="level" >
-          <el-select v-model="formData.level" placeholder="请选择" style="width:100%" :clearable="false" >
-            <el-option v-for="(item,key) in intOptions" :key="key" :label="item.label" :value="item.value" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="位置编号:"  prop="positionId" >
-          <el-select v-model="formData.positionId" placeholder="请选择" style="width:100%" :clearable="false" >
-            <el-option v-for="(item,key) in intOptions" :key="key" :label="item.label" :value="item.value" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="位置名称:"  prop="positionName" >
-          <el-input v-model="formData.positionName" :clearable="false"  placeholder="请输入" />
+        <el-form-item label="项目区域" prop="positionId" class="required label-center-align">
+          <el-cascader
+            v-model="formData.positionId"
+            class="full-width-input"
+            :options="positionIdOptions"
+            clearable
+            filterable
+            :props="props1"
+            placeholder="请选择项目区域"
+          />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -126,51 +145,87 @@ import {
 } from '@/api/projectStruct'
 
 // 全量引入格式化工具 请按需保留
-import { getDictFunc, formatDate, formatBoolean, filterDict } from '@/utils/format'
+import { getDictFunc, formatDate, filterDict } from '@/utils/format'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ref, reactive } from 'vue'
+
+const props0 = {
+  checkStrictly: true
+}
+
+const props1 = {
+  checkStrictly: true,
+  lazy: true,
+  lazyLoad(node, resolve) {
+    let id = 10
+    const { level } = node
+    setTimeout(() => {
+      const nodes = Array.from({ length: level + 1 }).map((item) => ({
+        value: ++id,
+        label: `Option - ${id}`,
+        leaf: level >= 2,
+      }))
+      // Invoke `resolve` callback to return the child nodes data and indicate the loading is finished.
+      resolve(nodes)
+    }, 1000)
+  },
+}
 
 // 自动化生成的字典（可能为空）以及字段
 const intOptions = ref([])
 const formData = ref({
-        name: '',
-        pid: undefined,
-        level: undefined,
-        positionId: undefined,
-        positionName: '',
-        })
+  name: '',
+  pid: undefined,
+  positionId: undefined,
+})
 
+const pidOptions = [{
+  'label': 'select 1',
+  'value': 1,
+  'children': [{
+    'label': 'child 1',
+    'value': 11
+  }]
+}, {
+  'label': 'select 2',
+  'value': 2
+}, {
+  'label': 'select 3',
+  'value': 3
+}]
+const positionIdOptions = [{
+  'label': 'select 1',
+  'value': 1,
+  'children': [
+
+  ]
+}, {
+  'label': 'select 2',
+  'value': 2
+}, {
+  'label': 'select 3',
+  'value': 3
+}]
 // 验证规则
-const rule = reactive({
-               name : [{
-                   required: true,
-                   message: '',
-                   trigger: ['input','blur'],
-               }],
-               pid : [{
-                   required: true,
-                   message: '',
-                   trigger: ['input','blur'],
-               }],
-               level : [{
-                   required: true,
-                   message: '',
-                   trigger: ['input','blur'],
-               }],
-               positionId : [{
-                   required: true,
-                   message: '',
-                   trigger: ['input','blur'],
-               }],
-               positionName : [{
-                   required: true,
-                   message: '',
-                   trigger: ['input','blur'],
-               }],
+const rules = reactive({
+  name: [{
+    required: true,
+    message: '项目名称不能为空',
+    trigger: ['input', 'blur'],
+  }],
+  pid: [{
+    required: true,
+    message: '项目上级不能为空',
+    trigger: ['input', 'blur'],
+  }],
+  positionId: [{
+    required: true,
+    message: '项目区域不能为空',
+    trigger: ['input', 'blur'],
+  }],
 })
 
 const elFormRef = ref()
-
 
 // =========== 表格控制部分 ===========
 const page = ref(1)
@@ -220,91 +275,88 @@ getTableData()
 // ============== 表格控制部分结束 ===============
 
 // 获取需要的字典 可能为空 按需保留
-const setOptions = async () =>{
-    intOptions.value = await getDictFunc('int')
+const setOptions = async() => {
+  intOptions.value = await getDictFunc('int')
 }
 
 // 获取需要的字典 可能为空 按需保留
 setOptions()
 
-
 // 多选数据
 const multipleSelection = ref([])
 // 多选
 const handleSelectionChange = (val) => {
-    multipleSelection.value = val
+  multipleSelection.value = val
 }
 
 // 删除行
 const deleteRow = (row) => {
-    ElMessageBox.confirm('确定要删除吗?', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-    }).then(() => {
-            deleteProjectStructFunc(row)
-        })
-    }
-
+  ElMessageBox.confirm('确定要删除吗?', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(() => {
+    deleteProjectStructFunc(row)
+  })
+}
 
 // 批量删除控制标记
 const deleteVisible = ref(false)
 
 // 多选删除
 const onDelete = async() => {
-      const ids = []
-      if (multipleSelection.value.length === 0) {
-        ElMessage({
-          type: 'warning',
-          message: '请选择要删除的数据'
-        })
-        return
-      }
-      multipleSelection.value &&
-        multipleSelection.value.map(item => {
-          ids.push(item.ID)
-        })
-      const res = await deleteProjectStructByIds({ ids })
-      if (res.code === 0) {
-        ElMessage({
-          type: 'success',
-          message: '删除成功'
-        })
-        if (tableData.value.length === ids.length && page.value > 1) {
-          page.value--
-        }
-        deleteVisible.value = false
-        getTableData()
-      }
+  const ids = []
+  if (multipleSelection.value.length === 0) {
+    ElMessage({
+      type: 'warning',
+      message: '请选择要删除的数据'
+    })
+    return
+  }
+  multipleSelection.value &&
+  multipleSelection.value.map(item => {
+    ids.push(item.ID)
+  })
+  const res = await deleteProjectStructByIds({ ids })
+  if (res.code === 0) {
+    ElMessage({
+      type: 'success',
+      message: '删除成功'
+    })
+    if (tableData.value.length === ids.length && page.value > 1) {
+      page.value--
     }
+    deleteVisible.value = false
+    getTableData()
+  }
+}
 
 // 行为控制标记（弹窗内部需要增还是改）
 const type = ref('')
 
 // 更新行
 const updateProjectStructFunc = async(row) => {
-    const res = await findProjectStruct({ ID: row.ID })
-    type.value = 'update'
-    if (res.code === 0) {
-        formData.value = res.data.reprojectStruct
-        dialogFormVisible.value = true
-    }
+  const res = await findProjectStruct({ ID: row.ID })
+  type.value = 'update'
+  if (res.code === 0) {
+    formData.value = res.data.reprojectStruct
+    dialogFormVisible.value = true
+  }
 }
 
-
 // 删除行
-const deleteProjectStructFunc = async (row) => {
-    const res = await deleteProjectStruct({ ID: row.ID })
-    if (res.code === 0) {
-        ElMessage({
-                type: 'success',
-                message: '删除成功'
-            })
-            if (tableData.value.length === 1 && page.value > 1) {
-            page.value--
-        }
-        getTableData()
+const deleteProjectStructFunc = async(row) => {
+  const res = await deleteProjectStruct({ ID: row.ID })
+  if (res.code === 0) {
+    ElMessage({
+      type: 'success',
+      message: '删除成功'
+    })
+    if (tableData.value.length === 1 && page.value > 1) {
+      page.value--
     }
+    getTableData()
+  }
 }
 
 // 弹窗控制标记
@@ -312,48 +364,138 @@ const dialogFormVisible = ref(false)
 
 // 打开弹窗
 const openDialog = () => {
-    type.value = 'create'
-    dialogFormVisible.value = true
+  type.value = 'create'
+  dialogFormVisible.value = true
 }
 
 // 关闭弹窗
 const closeDialog = () => {
-    dialogFormVisible.value = false
-    formData.value = {
-        name: '',
-        pid: undefined,
-        level: undefined,
-        positionId: undefined,
-        positionName: '',
-        }
+  dialogFormVisible.value = false
+  formData.value = {
+    name: '',
+    pid: undefined,
+    positionId: undefined,
+  }
 }
 // 弹窗确定
-const enterDialog = async () => {
-     elFormRef.value?.validate( async (valid) => {
-             if (!valid) return
-              let res
-              switch (type.value) {
-                case 'create':
-                  res = await createProjectStruct(formData.value)
-                  break
-                case 'update':
-                  res = await updateProjectStruct(formData.value)
-                  break
-                default:
-                  res = await createProjectStruct(formData.value)
-                  break
-              }
-              if (res.code === 0) {
-                ElMessage({
-                  type: 'success',
-                  message: '创建/更改成功'
-                })
-                closeDialog()
-                getTableData()
-              }
+const enterDialog = async() => {
+  elFormRef.value?.validate(async(valid) => {
+    if (!valid) return
+    let res
+    switch (type.value) {
+      case 'create':
+        res = await createProjectStruct(formData.value)
+        break
+      case 'update':
+        res = await updateProjectStruct(formData.value)
+        break
+      default:
+        res = await createProjectStruct(formData.value)
+        break
+    }
+    if (res.code === 0) {
+      ElMessage({
+        type: 'success',
+        message: '创建/更改成功'
       })
+      closeDialog()
+      getTableData()
+    }
+  })
 }
 </script>
 
-<style>
+<style lang="scss">
+.el-input-number.full-width-input,
+.el-cascader.full-width-input {
+  width: 100% !important;
+}
+
+.el-form-item--medium {
+  .el-radio {
+    line-height: 36px !important;
+  }
+
+  .el-rate {
+    margin-top: 8px;
+  }
+}
+
+.el-form-item--small {
+  .el-radio {
+    line-height: 32px !important;
+  }
+
+  .el-rate {
+    margin-top: 6px;
+  }
+}
+
+.el-form-item--mini {
+  .el-radio {
+    line-height: 28px !important;
+  }
+
+  .el-rate {
+    margin-top: 4px;
+  }
+}
+
+.clear-fix:before,
+.clear-fix:after {
+  display: table;
+  content: "";
+}
+
+.clear-fix:after {
+  clear: both;
+}
+
+.float-right {
+  float: right;
+}
+
+</style>
+
+<style lang="scss" scoped>
+div.table-container {
+  table.table-layout {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+
+    td.table-cell {
+      display: table-cell;
+      height: 36px;
+      border: 1px solid #e1e2e3;
+    }
+  }
+}
+
+div.tab-container {}
+
+.label-left-align :deep(.el-form-item__label) {
+  text-align: left;
+}
+
+.label-center-align :deep(.el-form-item__label) {
+  text-align: center;
+}
+
+.label-right-align :deep(.el-form-item__label) {
+  text-align: right;
+}
+
+.custom-label {}
+
+.static-content-item {
+  min-height: 20px;
+  display: flex;
+  align-items: center;
+
+  :deep(.el-divider--horizontal) {
+    margin: 0;
+  }
+}
+
 </style>
