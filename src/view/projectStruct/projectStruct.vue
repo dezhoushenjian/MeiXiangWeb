@@ -141,7 +141,9 @@ import {
   deleteProjectStructByIds,
   updateProjectStruct,
   findProjectStruct,
-  getProjectStructList
+  getProjectStructList,
+  getProjectTreeApi,
+  getPositionApi
 } from '@/api/projectStruct'
 
 // 全量引入格式化工具 请按需保留
@@ -150,26 +152,53 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { ref, reactive } from 'vue'
 
 const props0 = {
-  checkStrictly: true
+  checkStrictly: true,
+  value: 'Pid',
+  label: 'Name',
+  children: 'Child',
 }
 
 const props1 = {
+  value: 'code',
+  label: 'name',
+  children: 'children',
   checkStrictly: true,
   lazy: true,
   lazyLoad(node, resolve) {
-    let id = 10
     const { level } = node
-    setTimeout(() => {
-      const nodes = Array.from({ length: level + 1 }).map((item) => ({
-        value: ++id,
-        label: `Option - ${id}`,
-        leaf: level >= 2,
-      }))
-      // Invoke `resolve` callback to return the child nodes data and indicate the loading is finished.
-      resolve(nodes)
-    }, 1000)
+    const code = node.data.code
+    const typeDict = { '1': 'city', '2': 'county', '3': 'town', '4': 'village' }
+    // 如果当前节点是村第5层则直接返回
+    if (level > 4) return resolve()
+    getPositionApi(typeDict[String(level)], { keyword: code }).then((res) => {
+      if (res.code === 0) {
+        node.data.children = res.data
+        resolve(positionIdOptions.value)
+      }
+    })
   },
 }
+
+const getProjectTree = async() => {
+  const res = await getProjectTreeApi()
+  if (res.code === 0) {
+    pidOptions.value = [res.data]
+  }
+}
+getProjectTree()
+
+// 获取省地区信息
+const getPosition = async(type, params) => {
+  const res = await getPositionApi(type, params)
+  if (res.code === 0) {
+    res.data.map((item) => {
+      item.children = []
+    })
+    positionIdOptions.value = res.data
+    return res.data
+  }
+}
+getPosition('province')
 
 // 自动化生成的字典（可能为空）以及字段
 const intOptions = ref([])
@@ -179,33 +208,8 @@ const formData = ref({
   positionId: undefined,
 })
 
-const pidOptions = [{
-  'label': 'select 1',
-  'value': 1,
-  'children': [{
-    'label': 'child 1',
-    'value': 11
-  }]
-}, {
-  'label': 'select 2',
-  'value': 2
-}, {
-  'label': 'select 3',
-  'value': 3
-}]
-const positionIdOptions = [{
-  'label': 'select 1',
-  'value': 1,
-  'children': [
-
-  ]
-}, {
-  'label': 'select 2',
-  'value': 2
-}, {
-  'label': 'select 3',
-  'value': 3
-}]
+const pidOptions = ref([])
+const positionIdOptions = ref([])
 // 验证规则
 const rules = reactive({
   name: [{

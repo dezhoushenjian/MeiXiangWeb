@@ -95,3 +95,22 @@ export const getProjectStructList = (params) => {
     params
   })
 }
+// 获取项目树形结构
+export const getProjectTreeApi = () => {
+  return service({
+    url: 'projectStruct/getProjectTree',
+    method: 'get',
+    donNotShowLoading: true
+  })
+}
+
+// 获取省,市,县,乡,村 province city county town village
+export const getPositionApi = (type, data) => {
+  return service({
+    url: '/positionApi/' + type,
+    method: 'post',
+    data,
+    donNotShowLoading: true
+  })
+}
+

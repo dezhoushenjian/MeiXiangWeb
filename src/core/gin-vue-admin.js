@@ -8,9 +8,6 @@ import { register } from './global'
 export default {
   install: (app) => {
     register(app)
-    console.log(`
-       当前版本:v2.5.5
-       默认前端文件运行地址:http://127.0.0.1:${import.meta.env.VITE_CLI_PORT}
-    `)
+    console.log(`当前版本:v2.5.5\n默认前端文件运行地址:http://127.0.0.1:${import.meta.env.VITE_CLI_PORT}`)
   }
 }
