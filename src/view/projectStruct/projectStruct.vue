@@ -7,6 +7,23 @@
           —
           <el-date-picker v-model="searchInfo.endCreatedAt" type="datetime" placeholder="结束时间" />
         </el-form-item>
+
+        <el-form-item label="项目名称" class="label-center-align">
+          <el-input v-model="searchInfo.name" type="text" placeholder="请输入项目名称" clearable />
+        </el-form-item>
+
+        <el-form-item label="上级项目" class="label-center-align">
+          <el-cascader
+            v-model="searchInfo.pid"
+            class="full-width-input"
+            :options="pidOptions"
+            clearable
+            filterable
+            :props="props0"
+            placeholder="请选择上级项目"
+          />
+        </el-form-item>
+
         <el-form-item>
           <el-button type="primary" icon="search" @click="onSubmit">查询</el-button>
           <el-button icon="refresh" @click="onReset">重置</el-button>
@@ -42,27 +59,42 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="50" />
-        <el-table-column align="left" label="创建日期">
+        <el-table-column align="center" width="155" label="创建日期">
           <template #default="scope">{{ formatDate(scope.row.CreatedAt) }}</template>
         </el-table-column>
-        <el-table-column align="left" label="项目名称" prop="name" />
-        <el-table-column align="left" label="上级项目" prop="pid">
+        <el-table-column align="center" label="状态" width="60" prop="pid">
           <template #default="scope">
-            {{ filterDict(scope.row.pid, intOptions) }}
+            <span v-if="scope.row.enable!==1" style="color:red;">禁用</span>
+            <span v-if="scope.row.enable===1" style="color:green;">启用</span>
           </template>
         </el-table-column>
-        <el-table-column align="left" label="项目层级" prop="level">
+        <el-table-column align="left" label="项目名称" width="150" prop="name" />
+        <el-table-column align="left" label="上级项目" width="150" prop="pid">
           <template #default="scope">
-            {{ filterDict(scope.row.level, intOptions) }}
+            {{ getParentProject(scope.row.pid) }}
           </template>
         </el-table-column>
-        <el-table-column align="left" label="区域编码" prop="positionId">
+        <el-table-column align="left" label="项目层级" width="150" prop="level">
           <template #default="scope">
-            {{ filterDict(scope.row.positionId, intOptions) }}
+            {{ scope.row.level===0?'根项目':scope.row.level+'级项目' }}
           </template>
         </el-table-column>
-        <el-table-column align="left" label="区域名称" prop="positionName" />
-        <el-table-column align="left" label="按钮组" width="150">
+        <el-table-column align="left" label="区域编码" width="150" prop="positionId">
+          <template #default="scope">
+            {{ getPositionId(scope.row) }}
+          </template>
+        </el-table-column>
+        <el-table-column align="left" label="区域名称" width="150" prop="positionName">
+          <template #default="scope">
+            <el-tooltip class="box-item" effect="dark" :content="getPositionName(scope.row).join(' / ')" placement="top">
+              {{ getPositionName(scope.row)[ getPositionName(scope.row).length-1] }}
+            </el-tooltip>
+          </template>
+        </el-table-column>
+        <el-table-column align="center" label="项目描述" prop="desc">
+          <template #default="scope">{{ scope.row.desc }}</template>
+        </el-table-column>
+        <el-table-column align="left" label="按钮组" width="150" fixed="right">
           <template #default="scope">
             <el-button type="primary" link icon="edit" class="table-button" @click="updateProjectStructFunc(scope.row)">
               变更
@@ -114,8 +146,16 @@
             clearable
             filterable
             :props="props1"
-            placeholder="请选择项目区域"
+            :placeholder="formData['positionDesc']"
           />
+        </el-form-item>
+        <el-form-item label="项目状态" prop="enable">
+          <el-radio-group v-model="formData.enable">
+            <el-radio v-for="(item, index) in enableOptions" :key="index" :label="item.value" style="{display: inline}">{{ item.label }}</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="项目描述" prop="desc">
+          <el-input v-model="formData.desc" type="text" placeholder="请输入项目描述" clearable />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -153,7 +193,7 @@ import { ref, reactive } from 'vue'
 
 const props0 = {
   checkStrictly: true,
-  value: 'Pid',
+  value: 'Id',
   label: 'Name',
   children: 'Child',
 }
@@ -179,13 +219,18 @@ const props1 = {
   },
 }
 
+const enableOptions = [{ 'label': '启用', 'value': 1 }, { 'label': '禁用', 'value': 2 }]
+
+const pidOptions = ref([])
+
 const getProjectTree = async() => {
+  pidOptions.value = []
   const res = await getProjectTreeApi()
   if (res.code === 0) {
     pidOptions.value = [res.data]
   }
 }
-getProjectTree()
+// getProjectTree()
 
 // 获取省地区信息
 const getPosition = async(type, params) => {
@@ -204,11 +249,12 @@ getPosition('province')
 const intOptions = ref([])
 const formData = ref({
   name: '',
-  pid: undefined,
-  positionId: undefined,
+  pid: null,
+  positionId: null,
+  enable: 1,
+  desc: null
 })
 
-const pidOptions = ref([])
 const positionIdOptions = ref([])
 // 验证规则
 const rules = reactive({
@@ -225,6 +271,11 @@ const rules = reactive({
   positionId: [{
     required: true,
     message: '项目区域不能为空',
+    trigger: ['input', 'blur'],
+  }],
+  enable: [{
+    required: true,
+    message: '项目状态不能为空',
     trigger: ['input', 'blur'],
   }],
 })
@@ -265,16 +316,84 @@ const handleCurrentChange = (val) => {
 
 // 查询
 const getTableData = async() => {
-  const table = await getProjectStructList({ page: page.value, pageSize: pageSize.value, ...searchInfo.value })
+  const searchInfo2 = JSON.parse(JSON.stringify(searchInfo.value))
+  if (searchInfo2.pid) searchInfo2.pid = searchInfo2.pid[searchInfo2.pid.length - 1]
+  const table = await getProjectStructList({ page: page.value, pageSize: pageSize.value, ...searchInfo2 })
   if (table.code === 0) {
     tableData.value = table.data.list
     total.value = table.data.total
     page.value = table.data.page
     pageSize.value = table.data.pageSize
+    getProjectTree()
   }
 }
 
 getTableData()
+
+const getParentProject = (val) => {
+  const data = findParentProjectById(pidOptions.value, val)
+  if (data) return data.Name
+  return null
+}
+
+const findParentProjectById = (obj, id) => {
+  // 检查当前对象是否为目标对象
+  if (obj && obj['Id'] === id) {
+    return obj
+  }
+
+  // 遍历当前对象的属性
+  for (const key in obj) {
+    if (typeof obj[key] === 'object') {
+      // 如果属性的值是对象，则递归调用 findObjectById
+      const result = findParentProjectById(obj[key], id)
+      if (result) {
+        return result
+      }
+    }
+  }
+
+  // 如果没有找到目标对象，则返回 null
+  return null
+}
+
+const getPositionId = (val) => {
+  const {
+    positionVillageCode,
+    positionTownCode,
+    positionCountyCode,
+    positionCityCode,
+    positionProvinceCode
+  } = val
+
+  if (positionVillageCode) return positionVillageCode
+  if (positionTownCode) return positionTownCode
+  if (positionCountyCode) return positionCountyCode
+  if (positionCityCode) return positionCityCode
+  if (positionProvinceCode) return positionProvinceCode
+
+  return null
+}
+
+const getPositionName = (val) => {
+  const {
+    positionVillage,
+    positionTown,
+    positionCounty,
+    positionCity,
+    positionProvince
+  } = val
+
+  const positionParts = []
+
+  if (positionProvince) positionParts.push(positionProvince)
+  if (positionCity) positionParts.push(positionCity)
+  if (positionCounty) positionParts.push(positionCounty)
+  if (positionTown) positionParts.push(positionTown)
+  if (positionVillage) positionParts.push(positionVillage)
+
+  return positionParts
+}
 
 // ============== 表格控制部分结束 ===============
 
@@ -344,8 +463,37 @@ const updateProjectStructFunc = async(row) => {
   type.value = 'update'
   if (res.code === 0) {
     formData.value = res.data.reprojectStruct
+    formData.value.positionId = formatPositionId(formData.value)
+    formData.value.positionDesc = formatPositionDesc(formData.value)
+
     dialogFormVisible.value = true
   }
+}
+const formatPositionId = (value) => {
+  const { positionVillageCode, positionTownCode, positionCountyCode, positionCityCode, positionProvinceCode } = value
+
+  const positionDescParts = []
+
+  if (positionProvinceCode) positionDescParts.push(positionProvinceCode)
+  if (positionCityCode) positionDescParts.push(positionCityCode)
+  if (positionCountyCode) positionDescParts.push(positionCountyCode)
+  if (positionTownCode) positionDescParts.push(positionTownCode)
+  if (positionVillageCode) positionDescParts.push(positionVillageCode)
+  return positionDescParts
+}
+
+const formatPositionDesc = (value) => {
+  const { positionVillage, positionTown, positionCounty, positionCity, positionProvince } = value
+
+  const positionDescParts = []
+
+  if (positionProvince) positionDescParts.push(positionProvince)
+  if (positionCity) positionDescParts.push(positionCity)
+  if (positionCounty) positionDescParts.push(positionCounty)
+  if (positionTown) positionDescParts.push(positionTown)
+  if (positionVillage) positionDescParts.push(positionVillage)
+
+  return positionDescParts.join(' / ')
 }
 
 // 删除行
@@ -377,8 +525,10 @@ const closeDialog = () => {
   dialogFormVisible.value = false
   formData.value = {
     name: '',
-    pid: undefined,
-    positionId: undefined,
+    pid: null,
+    positionId: null,
+    enable: 1,
+    desc: null
   }
 }
 // 弹窗确定
@@ -388,10 +538,14 @@ const enterDialog = async() => {
     let res
     switch (type.value) {
       case 'create':
-        res = await createProjectStruct(formData.value)
+        // eslint-disable-next-line no-case-declarations
+        const createData = formatSubmitData(JSON.parse(JSON.stringify(formData.value)))
+        res = await createProjectStruct(createData)
         break
       case 'update':
-        res = await updateProjectStruct(formData.value)
+        // eslint-disable-next-line no-case-declarations
+        const updateData = formatSubmitData(JSON.parse(JSON.stringify(formData.value)))
+        res = await updateProjectStruct(updateData)
         break
       default:
         res = await createProjectStruct(formData.value)
@@ -407,6 +561,39 @@ const enterDialog = async() => {
     }
   })
 }
+
+const formatSubmitData = (data) => {
+  if (Array.isArray(data.pid)) data.pid = data.pid[data.pid.length - 1]
+  // eslint-disable-next-line no-case-declarations
+  const [positionProvince, positionCity, positionCounty, positionTown, positionVillage] = data.positionId
+  // eslint-disable-next-line no-case-declarations
+  const positionProvinceData = positionIdOptions.value.find((item) => item['code'] === positionProvince)
+  data.positionProvince = positionProvinceData['name']
+  data.positionProvinceCode = positionProvinceData['code']
+  if (positionCity) {
+    const positionCityData = positionProvinceData['children'].find((item) => item['code'] === positionCity)
+    data.positionCity = positionCityData['name']
+    data.positionCityCode = positionCityData['code']
+    if (positionCounty) {
+      const positionCountyData = positionCityData['children'].find((item) => item['code'] === positionCounty)
+      data.positionCounty = positionCountyData['name']
+      data.positionCountyCode = positionCountyData['code']
+      if (positionTown) {
+        const positionTownData = positionCountyData['children'].find((item) => item['code'] === positionTown)
+        data.positionTown = positionTownData['name']
+        data.positionTownCode = positionTownData['code']
+        if (positionVillage) {
+          const positionVillageData = positionTownData['children'].find((item) => item['code'] === positionVillage)
+          data.positionVillage = positionVillageData['name']
+          data.positionVillageCode = positionVillageData['code']
+        }
+      }
+    }
+  }
+  delete data.positionId
+  return data
+}
+
 </script>
 
 <style lang="scss">
@@ -476,7 +663,8 @@ div.table-container {
   }
 }
 
-div.tab-container {}
+div.tab-container {
+}
 
 .label-left-align :deep(.el-form-item__label) {
   text-align: left;
@@ -490,7 +678,8 @@ div.tab-container {}
   text-align: right;
 }
 
-.custom-label {}
+.custom-label {
+}
 
 .static-content-item {
   min-height: 20px;
@@ -500,6 +689,9 @@ div.tab-container {}
   :deep(.el-divider--horizontal) {
     margin: 0;
   }
+}
+:deep(.el-form--label-left .el-form-item__label){
+  justify-content:flex-end
 }
 
 </style>

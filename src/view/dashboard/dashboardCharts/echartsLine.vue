@@ -5,6 +5,7 @@
     </div>
     <div
       ref="echart"
+      style="touch-action: none;"
       class="dashboard-line"
     />
   </div>
