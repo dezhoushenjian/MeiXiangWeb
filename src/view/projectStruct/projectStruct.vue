@@ -94,7 +94,7 @@
         <el-table-column align="center" label="项目描述" prop="desc">
           <template #default="scope">{{ scope.row.desc }}</template>
         </el-table-column>
-        <el-table-column align="left" label="按钮组" width="150" fixed="right">
+        <el-table-column align="center" label="按钮组" width="150" fixed="right">
           <template #default="scope">
             <el-button type="primary" link icon="edit" class="table-button" @click="updateProjectStructFunc(scope.row)">
               变更
