@@ -27,6 +27,8 @@ export default {
 </script>
 
 <script setup>
+
+import { useUserStore } from '@/pinia/modules/user'
 import { getAllApis } from '@/api/api'
 import { UpdateCasbin, getPolicyPathByAuthorityId } from '@/api/casbin'
 import { ref, watch } from 'vue'
@@ -40,6 +42,7 @@ const props = defineProps({
   }
 })
 
+const userStore = useUserStore()
 const apiDefaultProps = ref({
   children: 'children',
   label: 'description'
@@ -50,12 +53,22 @@ const apiTreeIds = ref([])
 const activeUserId = ref('')
 const init = async() => {
   const res2 = await getAllApis()
-  const apis = res2.data.apis
-
-  apiTreeData.value = buildApiTree(apis)
+  let apis = res2.data.apis
+  // apiTreeData.value = buildApiTree(apis)
+  if (userStore.userInfo.authority.authorityId === 888) {
+    apiTreeData.value = buildApiTree(apis)
+  }
   const res = await getPolicyPathByAuthorityId({
     authorityId: props.row.authorityId
   })
+  if (userStore.userInfo.authority.authorityId !== 888) {
+    const apiArray = []
+    res.data.paths.map((item) => { apiArray.push(item.path) })
+    apis = apis.filter((item) => {
+      return apiArray.includes(item.path)
+    })
+    apiTreeData.value = buildApiTree(apis)
+  }
   activeUserId.value = props.row.authorityId
   apiTreeIds.value = []
   res.data.paths && res.data.paths.forEach(item => {

@@ -2,7 +2,7 @@
   <div class="authority">
     <warning-bar title="注：右上角头像下拉可切换角色" />
     <div class="gva-table-box">
-      <div class="gva-btn-list">
+      <div v-if="userStore.userInfo.authority.authorityId === 888" class="gva-btn-list">
         <el-button type="primary" icon="plus" @click="addAuthority(0)">新增角色</el-button>
       </div>
       <el-table
@@ -113,6 +113,8 @@ import Apis from '@/view/superAdmin/authority/components/apis.vue'
 import Datas from '@/view/superAdmin/authority/components/datas.vue'
 import WarningBar from '@/components/warningBar/warningBar.vue'
 
+import { useUserStore } from '@/pinia/modules/user'
+
 import { ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
@@ -123,6 +125,7 @@ const mustUint = (rule, value, callback) => {
   return callback()
 }
 
+const userStore = useUserStore()
 const AuthorityOption = ref([
   {
     authorityId: 0,

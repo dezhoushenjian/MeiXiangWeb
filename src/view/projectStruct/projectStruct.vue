@@ -565,31 +565,34 @@ const enterDialog = async() => {
 const formatSubmitData = (data) => {
   if (Array.isArray(data.pid)) data.pid = data.pid[data.pid.length - 1]
   // eslint-disable-next-line no-case-declarations
-  const [positionProvince, positionCity, positionCounty, positionTown, positionVillage] = data.positionId
-  // eslint-disable-next-line no-case-declarations
-  const positionProvinceData = positionIdOptions.value.find((item) => item['code'] === positionProvince)
-  data.positionProvince = positionProvinceData['name']
-  data.positionProvinceCode = positionProvinceData['code']
-  if (positionCity) {
-    const positionCityData = positionProvinceData['children'].find((item) => item['code'] === positionCity)
-    data.positionCity = positionCityData['name']
-    data.positionCityCode = positionCityData['code']
-    if (positionCounty) {
-      const positionCountyData = positionCityData['children'].find((item) => item['code'] === positionCounty)
-      data.positionCounty = positionCountyData['name']
-      data.positionCountyCode = positionCountyData['code']
-      if (positionTown) {
-        const positionTownData = positionCountyData['children'].find((item) => item['code'] === positionTown)
-        data.positionTown = positionTownData['name']
-        data.positionTownCode = positionTownData['code']
-        if (positionVillage) {
-          const positionVillageData = positionTownData['children'].find((item) => item['code'] === positionVillage)
-          data.positionVillage = positionVillageData['name']
-          data.positionVillageCode = positionVillageData['code']
+  if (Array.isArray(data.positionId)) {
+    const [positionProvince, positionCity, positionCounty, positionTown, positionVillage] = data.positionId
+    // eslint-disable-next-line no-case-declarations
+    const positionProvinceData = positionIdOptions.value.find((item) => item['code'] === positionProvince)
+    data.positionProvince = positionProvinceData['name']
+    data.positionProvinceCode = positionProvinceData['code']
+    if (positionCity) {
+      const positionCityData = positionProvinceData['children'].find((item) => item['code'] === positionCity)
+      data.positionCity = positionCityData['name']
+      data.positionCityCode = positionCityData['code']
+      if (positionCounty) {
+        const positionCountyData = positionCityData['children'].find((item) => item['code'] === positionCounty)
+        data.positionCounty = positionCountyData['name']
+        data.positionCountyCode = positionCountyData['code']
+        if (positionTown) {
+          const positionTownData = positionCountyData['children'].find((item) => item['code'] === positionTown)
+          data.positionTown = positionTownData['name']
+          data.positionTownCode = positionTownData['code']
+          if (positionVillage) {
+            const positionVillageData = positionTownData['children'].find((item) => item['code'] === positionVillage)
+            data.positionVillage = positionVillageData['name']
+            data.positionVillageCode = positionVillageData['code']
+          }
         }
       }
     }
   }
+
   delete data.positionId
   return data
 }

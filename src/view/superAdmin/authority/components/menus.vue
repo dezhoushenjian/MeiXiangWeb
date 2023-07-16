@@ -32,7 +32,8 @@
                 {{ row.defaultRouter === data.name?"首页":"设为首页" }}
               </el-button>
             </span>
-            <span v-if="data.menuBtn.length">
+            <!--            <span v-if="data.menuBtn.length">-->
+            <span v-if="data.menuBtn">
               <el-button
                 type="primary"
                 link
@@ -69,9 +70,11 @@
 
 <script setup>
 import { getBaseMenuTree, getMenuAuthority, addMenuAuthority } from '@/api/menu'
+import { asyncMenu } from '@/api/menu'
 import {
   updateAuthority
 } from '@/api/authority'
+import { useUserStore } from '@/pinia/modules/user'
 import { getAuthorityBtnApi, setAuthorityBtnApi } from '@/api/authorityBtn'
 import { nextTick, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
@@ -85,6 +88,7 @@ const props = defineProps({
   }
 })
 
+const userStore = useUserStore()
 const emit = defineEmits(['changeRow'])
 const filterText = ref('')
 const menuTreeData = ref([])
@@ -99,7 +103,13 @@ const menuDefaultProps = ref({
 
 const init = async() => {
   // 获取所有菜单树
-  const res = await getBaseMenuTree()
+  let res = null
+  if (userStore.userInfo.authority.authorityId === 888) {
+    res = await getBaseMenuTree()
+  } else {
+    res = await asyncMenu()
+  }
+
   menuTreeData.value = res.data.menus
   const res1 = await getMenuAuthority({ authorityId: props.row.authorityId })
   const menus = res1.data.menus

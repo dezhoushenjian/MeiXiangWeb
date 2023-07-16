@@ -9,6 +9,12 @@
         :data="tableData"
         row-key="ID"
       >
+        <!--        <el-table-column type="expand">-->
+        <!--          <template #default="props">-->
+        <!--            <div>123</div>-->
+        <!--          </template>-->
+        <!--        </el-table-column>-->
+
         <el-table-column align="left" label="头像" min-width="75">
           <template #default="scope">
             <CustomPic style="margin-top:8px" :pic-src="scope.row.headerImg" />
@@ -17,22 +23,27 @@
         <el-table-column align="left" label="ID" min-width="50" prop="ID" />
         <el-table-column align="left" label="用户名" min-width="150" prop="userName" />
         <el-table-column align="left" label="昵称" min-width="150" prop="nickName" />
-        <el-table-column align="left" label="手机号" min-width="180" prop="phone" />
-        <el-table-column align="left" label="邮箱" min-width="180" prop="email" />
+        <el-table-column align="left" label="所属项目" width="150" prop="ProjectId">
+          <template #default="scope">
+            {{ getParentProject(scope.row.ProjectId) }}
+          </template>
+        </el-table-column>
         <el-table-column align="left" label="用户角色" min-width="200">
           <template #default="scope">
             <el-cascader
-              v-model="scope.row.authorityIds"
+              v-model="scope.row.authorityIds[0]"
               :options="authOptions"
               :show-all-levels="false"
               collapse-tags
-              :props="{ multiple:true,checkStrictly: true,label:'authorityName',value:'authorityId',disabled:'disabled',emitPath:false}"
+              :props="{ multiple:false,checkStrictly: true,label:'authorityName',value:'authorityId',disabled:'disabled',emitPath:false}"
               :clearable="false"
               @visible-change="(flag)=>{changeAuthority(scope.row,flag,0)}"
               @remove-tag="(removeAuth)=>{changeAuthority(scope.row,false,removeAuth)}"
             />
           </template>
         </el-table-column>
+        <el-table-column align="left" label="手机号" min-width="180" prop="phone" />
+        <el-table-column align="left" label="邮箱" min-width="180" prop="email" />
         <el-table-column align="left" label="启用" min-width="150">
           <template #default="scope">
             <el-switch
@@ -94,22 +105,38 @@
           <el-form-item label="昵称" prop="nickName">
             <el-input v-model="userInfo.nickName" />
           </el-form-item>
+
+          <el-form-item label="所属项目" prop="ProjectId">
+            <el-cascader
+              v-model="userInfo.ProjectId"
+              style="width:100%"
+              class="full-width-input"
+              :options="projecOptions"
+              clearable
+              filterable
+              :props="props0"
+              placeholder="请选择所属项目"
+            />
+          </el-form-item>
+
+          <el-form-item label="用户角色" prop="authorityId">
+            <el-cascader
+              v-model="userInfo.authorityIds[0]"
+              style="width:100%"
+              :options="authOptions"
+              :show-all-levels="false"
+              :props="{ multiple:false,checkStrictly: true,label:'authorityName',value:'authorityId',disabled:'disabled',emitPath:false}"
+              :clearable="false"
+              @visible-change="(flag)=>{changeAuthority2(userInfo,flag,0)}"
+            />
+          </el-form-item>
           <el-form-item label="手机号" prop="phone">
             <el-input v-model="userInfo.phone" />
           </el-form-item>
           <el-form-item label="邮箱" prop="email">
             <el-input v-model="userInfo.email" />
           </el-form-item>
-          <el-form-item label="用户角色" prop="authorityId">
-            <el-cascader
-              v-model="userInfo.authorityIds"
-              style="width:100%"
-              :options="authOptions"
-              :show-all-levels="false"
-              :props="{ multiple:true,checkStrictly: true,label:'authorityName',value:'authorityId',disabled:'disabled',emitPath:false}"
-              :clearable="false"
-            />
-          </el-form-item>
+
           <el-form-item label="启用" prop="disabled">
             <el-switch
               v-model="userInfo.enable"
@@ -155,6 +182,10 @@ import {
   deleteUser
 } from '@/api/user'
 
+import {
+  getProjectTreeApi,
+} from '@/api/projectStruct'
+
 import { getAuthorityList } from '@/api/authority'
 import CustomPic from '@/components/customPic/index.vue'
 import ChooseImg from '@/components/chooseImg/index.vue'
@@ -185,6 +216,50 @@ const setAuthorityOptions = (AuthorityData, optionsData) => {
           }
         })
 }
+// 获取项目树 start----------------
+const props0 = {
+  checkStrictly: true,
+  value: 'Id',
+  label: 'Name',
+  children: 'Child',
+}
+const projecOptions = ref([])
+const getProjectTree = async() => {
+  projecOptions.value = []
+  const res = await getProjectTreeApi()
+  if (res.code === 0) {
+    projecOptions.value = [res.data]
+  }
+}
+getProjectTree()
+
+const getParentProject = (val) => {
+  const data = findParentProjectById(projecOptions.value, val)
+  if (data) return data.Name
+  return null
+}
+
+const findParentProjectById = (obj, id) => {
+  // 检查当前对象是否为目标对象
+  if (obj && obj['Id'] === id) {
+    return obj
+  }
+
+  // 遍历当前对象的属性
+  for (const key in obj) {
+    if (typeof obj[key] === 'object') {
+      // 如果属性的值是对象，则递归调用 findObjectById
+      const result = findParentProjectById(obj[key], id)
+      if (result) {
+        return result
+      }
+    }
+  }
+
+  // 如果没有找到目标对象，则返回 null
+  return null
+}
+// 获取项目树 end---------------------
 
 const page = ref(1)
 const total = ref(0)
@@ -287,6 +362,18 @@ const userInfo = ref({
   authorityId: '',
   authorityIds: [],
   enable: 1,
+  ProjectId: '',
+  positionCity: '',
+  positionCityCode: '',
+  positionCounty: '',
+  positionCountyCode: '',
+  positionProvince: '',
+  positionProvinceCode: '',
+  positionTown: '',
+  positionTownCode: '',
+  positionVillage: '',
+  positionVillageCode: ''
+
 })
 
 const rules = ref({
@@ -309,7 +396,10 @@ const rules = ref({
   ],
   authorityId: [
     { required: true, message: '请选择用户角色', trigger: 'blur' }
-  ]
+  ],
+  ProjectId: [
+    { required: true, message: '所属项目不能为空', trigger: ['input', 'blur'] }
+  ],
 })
 const userForm = ref(null)
 const enterAddUserDialog = async() => {
@@ -319,8 +409,11 @@ const enterAddUserDialog = async() => {
       const req = {
         ...userInfo.value
       }
+      console.log(userInfo.value)
       if (dialogFlag.value === 'add') {
-        const res = await register(req)
+        // const res = await register(req)
+        const createData = formatSubmitData(JSON.parse(JSON.stringify(req)))
+        const res = await register(createData)
         if (res.code === 0) {
           ElMessage({ type: 'success', message: '创建成功' })
           await getTableData()
@@ -328,7 +421,9 @@ const enterAddUserDialog = async() => {
         }
       }
       if (dialogFlag.value === 'edit') {
-        const res = await setUserInfo(req)
+        // const res = await setUserInfo(req)
+        const updateData = formatSubmitData(JSON.parse(JSON.stringify(req)))
+        const res = await setUserInfo(updateData)
         if (res.code === 0) {
           ElMessage({ type: 'success', message: '编辑成功' })
           await getTableData()
@@ -337,6 +432,40 @@ const enterAddUserDialog = async() => {
       }
     }
   })
+}
+
+const formatSubmitData = (data) => {
+  if (Array.isArray(data.ProjectId)) data.ProjectId = data.ProjectId[data.ProjectId.length - 1]
+  // eslint-disable-next-line no-case-declarations
+  if (Array.isArray(data.positionId)) {
+    const [positionProvince, positionCity, positionCounty, positionTown, positionVillage] = data.positionId
+    // eslint-disable-next-line no-case-declarations
+    const positionProvinceData = positionIdOptions.value.find((item) => item['code'] === positionProvince)
+    data.positionProvince = positionProvinceData['name']
+    data.positionProvinceCode = positionProvinceData['code']
+    if (positionCity) {
+      const positionCityData = positionProvinceData['children'].find((item) => item['code'] === positionCity)
+      data.positionCity = positionCityData['name']
+      data.positionCityCode = positionCityData['code']
+      if (positionCounty) {
+        const positionCountyData = positionCityData['children'].find((item) => item['code'] === positionCounty)
+        data.positionCounty = positionCountyData['name']
+        data.positionCountyCode = positionCountyData['code']
+        if (positionTown) {
+          const positionTownData = positionCountyData['children'].find((item) => item['code'] === positionTown)
+          data.positionTown = positionTownData['name']
+          data.positionTownCode = positionTownData['code']
+          if (positionVillage) {
+            const positionVillageData = positionTownData['children'].find((item) => item['code'] === positionVillage)
+            data.positionVillage = positionVillageData['name']
+            data.positionVillageCode = positionVillageData['code']
+          }
+        }
+      }
+    }
+  }
+  delete data.positionId
+  return data
 }
 
 const addUserDialog = ref(false)
@@ -356,6 +485,12 @@ const addUser = () => {
 
 const tempAuth = {}
 const changeAuthority = async(row, flag, removeAuth) => {
+  if (Array.isArray(row.authorityIds)) {
+    row.authorityIds = [row.authorityIds[row.authorityIds.length - 1]]
+  } else {
+    row.authorityIds = [row.authorityIds]
+  }
+
   if (flag) {
     if (!removeAuth) {
       tempAuth[row.ID] = [...row.authorityIds]
@@ -363,6 +498,8 @@ const changeAuthority = async(row, flag, removeAuth) => {
     return
   }
   await nextTick()
+  console.log(row.authorityIds)
+
   const res = await setUserAuthorities({
     ID: row.ID,
     authorityIds: row.authorityIds
@@ -376,6 +513,13 @@ const changeAuthority = async(row, flag, removeAuth) => {
     } else {
       row.authorityIds = [removeAuth, ...row.authorityIds]
     }
+  }
+}
+const changeAuthority2 = async(row, flag, removeAuth) => {
+  if (Array.isArray(row.authorityIds)) {
+    row.authorityIds = [row.authorityIds[row.authorityIds.length - 1]]
+  } else {
+    row.authorityIds = [row.authorityIds]
   }
 }
 
