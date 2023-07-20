@@ -23,9 +23,9 @@
         <el-table-column align="left" label="ID" min-width="50" prop="ID" />
         <el-table-column align="left" label="用户名" min-width="150" prop="userName" />
         <el-table-column align="left" label="昵称" min-width="150" prop="nickName" />
-        <el-table-column align="left" label="所属项目" width="150" prop="ProjectId">
+        <el-table-column align="left" label="所属项目" width="150" prop="projectId">
           <template #default="scope">
-            {{ getParentProject(scope.row.ProjectId) }}
+            {{ getParentProject(scope.row.projectId) }}
           </template>
         </el-table-column>
         <el-table-column align="left" label="用户角色" min-width="200">
@@ -106,9 +106,9 @@
             <el-input v-model="userInfo.nickName" />
           </el-form-item>
 
-          <el-form-item label="所属项目" prop="ProjectId">
+          <el-form-item label="所属项目" prop="projectId">
             <el-cascader
-              v-model="userInfo.ProjectId"
+              v-model="userInfo.projectId"
               style="width:100%"
               class="full-width-input"
               :options="projecOptions"
@@ -362,7 +362,7 @@ const userInfo = ref({
   authorityId: '',
   authorityIds: [],
   enable: 1,
-  ProjectId: '',
+  projectId: '',
   positionCity: '',
   positionCityCode: '',
   positionCounty: '',
@@ -397,7 +397,7 @@ const rules = ref({
   authorityId: [
     { required: true, message: '请选择用户角色', trigger: 'blur' }
   ],
-  ProjectId: [
+  projectId: [
     { required: true, message: '所属项目不能为空', trigger: ['input', 'blur'] }
   ],
 })
@@ -435,7 +435,7 @@ const enterAddUserDialog = async() => {
 }
 
 const formatSubmitData = (data) => {
-  if (Array.isArray(data.ProjectId)) data.ProjectId = data.ProjectId[data.ProjectId.length - 1]
+  if (Array.isArray(data.projectId)) data.projectId = data.projectId[data.projectId.length - 1]
   // eslint-disable-next-line no-case-declarations
   if (Array.isArray(data.positionId)) {
     const [positionProvince, positionCity, positionCounty, positionTown, positionVillage] = data.positionId

@@ -58,14 +58,25 @@ const init = async() => {
   if (userStore.userInfo.authority.authorityId === 888) {
     apiTreeData.value = buildApiTree(apis)
   }
+
   const res = await getPolicyPathByAuthorityId({
     authorityId: props.row.authorityId
+    // authorityId: userStore.userInfo.authority.authorityId
   })
+  // 如果不是超级管理员则只能查看设置自己当前账号拥有的API权限
   if (userStore.userInfo.authority.authorityId !== 888) {
+    const re = await getPolicyPathByAuthorityId({
+      authorityId: userStore.userInfo.authority.authorityId
+    })
     const apiArray = []
-    res.data.paths.map((item) => { apiArray.push(item.path) })
+    re.data.paths.map((item) => { apiArray.push(item) })
+
     apis = apis.filter((item) => {
-      return apiArray.includes(item.path)
+      for (let i = 0; i < apiArray.length; i++) {
+        if (apiArray[i].path === item.path && apiArray[i].method === item.method) {
+          return item
+        }
+      }
     })
     apiTreeData.value = buildApiTree(apis)
   }
