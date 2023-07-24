@@ -69,16 +69,16 @@
           </template>
         </el-table-column>
         <el-table-column align="left" label="项目名称" width="150" prop="name" />
-        <el-table-column align="left" label="上级项目" width="150" prop="pid">
-          <template #default="scope">
-            {{ getParentProject(scope.row.pid) }}
-          </template>
-        </el-table-column>
-        <el-table-column align="left" label="项目层级" width="150" prop="level">
-          <template #default="scope">
-            {{ scope.row.level===0?'根项目':scope.row.level+'级项目' }}
-          </template>
-        </el-table-column>
+        <!--        <el-table-column align="left" label="上级项目" width="150" prop="pid">-->
+        <!--          <template #default="scope">-->
+        <!--            {{ getParentProject(scope.row.pid) }}-->
+        <!--          </template>-->
+        <!--        </el-table-column>-->
+        <!--        <el-table-column align="left" label="项目层级" width="150" prop="level">-->
+        <!--          <template #default="scope">-->
+        <!--            {{ scope.row.level===0?'根项目':scope.row.level+'级项目' }}-->
+        <!--          </template>-->
+        <!--        </el-table-column>-->
         <el-table-column align="left" label="区域编码" width="150" prop="positionId">
           <template #default="scope">
             {{ getPositionId(scope.row) }}
@@ -136,6 +136,7 @@
             filterable
             :props="props0"
             placeholder="请选择上级项目"
+            @change="pidChange"
           />
         </el-form-item>
         <el-form-item label="项目区域" prop="positionId" class="required label-center-align">
@@ -190,7 +191,7 @@ import {
 import { getDictFunc, formatDate, filterDict } from '@/utils/format'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ref, reactive } from 'vue'
-
+const parentProjectLevel = ref('')
 const props0 = {
   checkStrictly: true,
   value: 'Id',
@@ -205,17 +206,25 @@ const props1 = {
   checkStrictly: true,
   lazy: true,
   lazyLoad(node, resolve) {
-    const { level } = node
+    let { level } = node
+    if (parentProjectLevel.value) {
+      level = level + parentProjectLevel.value
+    }
+
     const code = node.data.code
     const typeDict = { '1': 'city', '2': 'county', '3': 'town', '4': 'village' }
     // 如果当前节点是村第5层则直接返回
     if (level > 4) return resolve()
-    getPositionApi(typeDict[String(level)], { keyword: code }).then((res) => {
-      if (res.code === 0) {
-        node.data.children = res.data
-        resolve(positionIdOptions.value)
-      }
-    })
+    if (code) {
+      getPositionApi(typeDict[String(level)], { keyword: code }).then((res) => {
+        if (res.code === 0) {
+          node.data.children = res.data
+          resolve(positionIdOptions.value)
+        }
+      })
+    } else {
+      return resolve()
+    }
   },
 }
 
@@ -243,7 +252,7 @@ const getPosition = async(type, params) => {
     return res.data
   }
 }
-getPosition('province')
+// getPosition('province')
 
 // 自动化生成的字典（可能为空）以及字段
 const intOptions = ref([])
@@ -595,6 +604,64 @@ const formatSubmitData = (data) => {
 
   delete data.positionId
   return data
+}
+
+const pidChange = async(e) => {
+  // 如果上级项目选择的是美翔则显示所有地区可选
+  if (e.length === 1 && e[0] === 1) {
+    parentProjectLevel.value = 0
+    getPosition('province')
+    return undefined
+  } else {
+    // 否则 地区尽可以选择上级项目的子区域
+    const typeDict = { '1': 'city', '2': 'county', '3': 'town', '4': 'village' }
+    const parentProjectID = formData.value.pid[formData.value.pid.length - 1]
+    let parentProjectInfos = await getProjectStructList({ id: parentProjectID })
+    parentProjectInfos = parentProjectInfos.data.list[0]
+
+    // 如果上级项目的地区是村级则不允许创建
+    if (parentProjectInfos.positionVillageCode) return undefined
+    if (parentProjectInfos.positionTownCode) {
+      parentProjectLevel.value = 4
+      getPositionApi('village', { keyword: parentProjectInfos.positionTownCode }).then((res) => {
+        if (res.code === 0) {
+          res.data.map((item) => { item.children = [] })
+          positionIdOptions.value = res.data
+        }
+      })
+      return undefined
+    }
+    if (parentProjectInfos.positionCountyCode) {
+      parentProjectLevel.value = 3
+      getPositionApi('town', { keyword: parentProjectInfos.positionCountyCode }).then((res) => {
+        if (res.code === 0) {
+          res.data.map((item) => { item.children = [] })
+          positionIdOptions.value = res.data
+        }
+      })
+      return undefined
+    }
+    if (parentProjectInfos.positionCityCode) {
+      parentProjectLevel.value = 2
+      getPositionApi('county', { keyword: parentProjectInfos.positionCityCode }).then((res) => {
+        if (res.code === 0) {
+          res.data.map((item) => { item.children = [] })
+          positionIdOptions.value = res.data
+        }
+      })
+      return undefined
+    }
+    if (parentProjectInfos.positionProvinceCode) {
+      parentProjectLevel.value = 1
+      getPositionApi('city', { keyword: parentProjectInfos.positionProvinceCode }).then((res) => {
+        if (res.code === 0) {
+          res.data.map((item) => { item.children = [] })
+          positionIdOptions.value = res.data
+        }
+        return undefined
+      })
+    }
+  }
 }
 
 </script>
